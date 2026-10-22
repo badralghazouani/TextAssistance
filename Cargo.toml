@@ -6,7 +6,9 @@ members = [
     "crates/privacy",
     "crates/llm",
     "crates/store",
+    "crates/engine",
     "apps/cli",
+    "apps/desktop",
 ]
 
 [workspace.package]
@@ -21,6 +23,7 @@ writer-core = { path = "crates/core" }
 writer-privacy = { path = "crates/privacy" }
 writer-llm = { path = "crates/llm" }
 writer-store = { path = "crates/store" }
+writer-engine = { path = "crates/engine" }
 
 anyhow = "1"
 async-trait = "0.1"

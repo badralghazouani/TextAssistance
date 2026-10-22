@@ -1,7 +1,15 @@
 //! API keys: environment variable first, then the macOS Keychain.
 
-use anyhow::{Result, bail};
+use anyhow::Result;
 use writer_llm::ProviderKind;
+
+/// Returned (inside `anyhow::Error`) when no key is configured, so a UI can
+/// ask for one instead of just showing the message.
+#[derive(Debug, thiserror::Error)]
+#[error("no API key for {provider}. Set {} or run `writer key set {provider}`.", provider.api_key_env())]
+pub struct MissingKey {
+    pub provider: ProviderKind,
+}
 
 #[cfg(target_os = "macos")]
 const SERVICE: &str = "app.writer.writer";
@@ -15,10 +23,7 @@ pub fn api_key(provider: ProviderKind) -> Result<String> {
     if let Some(key) = keychain::get(provider)? {
         return Ok(key);
     }
-    bail!(
-        "no API key for {provider}. Set {} or run `writer key set {provider}`.",
-        provider.api_key_env()
-    )
+    Err(MissingKey { provider }.into())
 }
 
 pub fn store_key(provider: ProviderKind, key: &str) -> Result<()> {

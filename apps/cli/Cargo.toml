@@ -16,14 +16,7 @@ rpassword = "7"
 serde.workspace = true
 serde_json.workspace = true
 tokio.workspace = true
-writer-core.workspace = true
+writer-engine.workspace = true
 writer-llm.workspace = true
-writer-privacy.workspace = true
 writer-protocol.workspace = true
 writer-store.workspace = true
-
-[target.'cfg(target_os = "macos")'.dependencies]
-keyring = { version = "3", features = ["apple-native"] }
-
-[dev-dependencies]
-async-trait.workspace = true

@@ -1,7 +1,8 @@
-//! The check and rewrite pipeline: redact, look up the cache, enforce the
-//! spending cap, call the model, and anchor its answer onto the original text.
-//!
-//! The macOS app will reuse this once it exists; it lives here until then.
+//! The check and rewrite pipeline shared by the CLI and the desktop app:
+//! redact, look up the cache, enforce the spending cap, call the model, and
+//! anchor its answer onto the original text.
+
+pub mod secrets;
 
 use anyhow::{Context, Result, bail};
 use writer_core::{Document, Locator, hash_text, utf16};
@@ -174,6 +175,20 @@ pub fn anchor(
         .collect();
     out.sort_by_key(|s| s.start);
     out
+}
+
+/// Applies every report's suggestions to the full text it was made from.
+pub fn apply_reports(text: &str, reports: &[ParagraphReport]) -> String {
+    text.split('\n')
+        .enumerate()
+        .map(
+            |(line, paragraph)| match reports.iter().find(|r| r.line == line) {
+                Some(r) => apply(paragraph, &r.suggestions),
+                None => paragraph.to_owned(),
+            },
+        )
+        .collect::<Vec<_>>()
+        .join("\n")
 }
 
 /// Applies non-overlapping suggestions to a paragraph (first one wins on overlap).

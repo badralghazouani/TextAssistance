@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>TextAssistance</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="card">
+      <header data-tauri-drag-region>
+        <span class="brand" data-tauri-drag-region>TextAssistance</span>
+        <span id="status" class="status" data-tauri-drag-region></span>
+        <button id="close" class="icon" title="Close (Esc)" aria-label="Close">✕</button>
+      </header>
+
+      <main>
+        <!-- Checking / results -->
+        <section id="result-view" hidden>
+          <div id="preview" class="preview" tabindex="0"></div>
+          <textarea id="rewrite-box" class="preview" hidden spellcheck="false"></textarea>
+          <ul id="suggestions" class="suggestions"></ul>
+        </section>
+
+        <!-- Something to fix before checking -->
+        <section id="error-view" class="error" hidden>
+          <p id="error-message"></p>
+          <div id="key-form" hidden>
+            <label>
+              Provider
+              <select id="key-provider">
+                <option value="claude">Claude (console.anthropic.com)</option>
+                <option value="openai">ChatGPT / OpenAI (platform.openai.com)</option>
+              </select>
+            </label>
+            <label>
+              API key
+              <input id="key-input" type="password" placeholder="sk-ant-api03-… or sk-…" autocomplete="off" />
+            </label>
+            <p class="hint">Stored in your macOS Keychain. Use an API key, not your chat subscription login.</p>
+            <button id="key-save" class="primary">Save and check</button>
+          </div>
+          <button id="open-accessibility" hidden>Open Accessibility settings</button>
+        </section>
+      </main>
+
+      <footer>
+        <div class="rewrite-group">
+          <span class="label">Rewrite:</span>
+          <button data-mode="clearer">Clearer</button>
+          <button data-mode="shorter">Shorter</button>
+          <button data-mode="formal">Formal</button>
+          <button data-mode="friendly">Friendly</button>
+        </div>
+        <div class="actions">
+          <span id="footer-info" class="info"></span>
+          <button id="copy">Copy</button>
+          <button id="replace" class="primary" title="Replace your text (Enter)">Replace</button>
+        </div>
+      </footer>
+    </div>
+    <script src="app.js"></script>
+  </body>
+</html>

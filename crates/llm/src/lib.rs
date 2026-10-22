@@ -130,15 +130,31 @@ pub trait LlmProvider: Send + Sync {
 }
 
 /// Builds the provider for `kind` with the given API key and models.
+///
+/// `ANTHROPIC_BASE_URL` / `OPENAI_BASE_URL` override the API host, as in the
+/// vendors' own SDKs (useful for proxies and for testing against a mock).
 pub fn provider(
     kind: ProviderKind,
     api_key: String,
     check_model: String,
     rewrite_model: String,
 ) -> Box<dyn LlmProvider> {
+    let base_url = |var: &str| std::env::var(var).ok().filter(|v| !v.trim().is_empty());
     match kind {
-        ProviderKind::Claude => Box::new(ClaudeProvider::new(api_key, check_model, rewrite_model)),
-        ProviderKind::OpenAi => Box::new(OpenAiProvider::new(api_key, check_model, rewrite_model)),
+        ProviderKind::Claude => {
+            let p = ClaudeProvider::new(api_key, check_model, rewrite_model);
+            Box::new(match base_url("ANTHROPIC_BASE_URL") {
+                Some(url) => p.with_base_url(url.trim_end_matches('/')),
+                None => p,
+            })
+        }
+        ProviderKind::OpenAi => {
+            let p = OpenAiProvider::new(api_key, check_model, rewrite_model);
+            Box::new(match base_url("OPENAI_BASE_URL") {
+                Some(url) => p.with_base_url(url.trim_end_matches(['/']).trim_end_matches("/v1")),
+                None => p,
+            })
+        }
     }
 }
 

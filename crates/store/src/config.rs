@@ -20,6 +20,8 @@ pub struct Config {
     /// LLM calls stop once this month's spend reaches the cap. 0 disables the cap.
     pub monthly_cap_usd: f64,
     pub locale: String,
+    /// Global shortcut that checks the text you are typing (desktop app).
+    pub hotkey: String,
 }
 
 impl Default for Config {
@@ -30,6 +32,7 @@ impl Default for Config {
             rewrite_model: None,
             monthly_cap_usd: 10.0,
             locale: "en-US".to_owned(),
+            hotkey: "Ctrl+Alt+G".to_owned(),
         }
     }
 }

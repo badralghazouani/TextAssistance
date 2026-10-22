@@ -19,7 +19,8 @@ The plan ([docs/PLAN.md](docs/PLAN.md)):
 | Privacy: emails, phones, cards (Luhn), IBANs redacted before sending | ✅ |
 | Claude + OpenAI adapters, price table, usage log, monthly cap, cache | ✅ |
 | `writer` CLI (test harness for the pipeline) | ✅ |
-| macOS app: accessibility capture, overlay, Tauri menu bar | next |
+| macOS menu-bar app: shortcut → suggestions popup → Replace | ✅ |
+| Underlines while you type (no shortcut needed) | next |
 | Offline spell-check | next |
 | SaaS gateway, Windows, browser extension, mobile keyboards | later |
 
@@ -31,10 +32,60 @@ crates/core       paragraphs, diffs, span rebasing, debounce, quote locating
 crates/privacy    PII redaction and mapping answers back to the original
 crates/llm        LlmProvider trait, Claude and OpenAI adapters, pricing
 crates/store      config file, SQLite usage log and result cache
+crates/engine     check/rewrite pipeline and API keys, shared by both apps
 apps/cli          the `writer` command
+apps/desktop      the menu-bar app (Tauri): shortcut, popup, replace
 ```
 
-## Set up on macOS
+## The menu-bar app
+
+TextAssistance runs in the menu bar. While writing anywhere (Teams, Chrome,
+Brave, Mail, Slack, Notes…):
+
+1. Click in the text (or select part of it) and press **⌃⌥G** (Control+Option+G).
+2. A popup shows the corrections in place. Click any one to skip it, or try
+   **Clearer / Shorter / Formal / Friendly** for a rewrite you can edit.
+3. Press **Enter** (or click **Replace**) and your text is swapped for the
+   corrected version. **Esc** closes without changing anything.
+
+It reads and writes your text through the clipboard (copy, select-all,
+paste) and puts your clipboard back afterwards, so it works in any app.
+
+### Install
+
+Download **TextAssistance-macOS** from the latest successful
+[CI run](../../actions/workflows/ci.yml) (or a [release](../../releases)),
+unzip it, open `TextAssistance.dmg` and drag the app to Applications.
+
+The app isn't signed with an Apple developer certificate yet, so macOS blocks
+it the first time. Run this once, then open it normally:
+
+```sh
+xattr -dr com.apple.quarantine /Applications/TextAssistance.app
+```
+
+Or build it yourself (needs Rust and Node.js):
+
+```sh
+cd apps/desktop
+npx @tauri-apps/cli@2 build --bundles app
+open ../../target/release/bundle/macos/TextAssistance.app
+```
+
+### First run
+
+1. **Accessibility:** macOS asks to let TextAssistance control your computer.
+   Allow it in System Settings → Privacy & Security → Accessibility. It is
+   needed to send copy and paste to the app you're writing in.
+2. **API key:** the first time you press ⌃⌥G the popup asks for your Claude or
+   OpenAI API key and stores it in the Keychain. (Keys saved with
+   `writer key set` work too.)
+3. Optional: menu bar icon → **Start at login**.
+
+The menu bar icon also switches between Claude and ChatGPT, shows this month's
+spend, and opens the settings file (change `hotkey` there, then restart).
+
+## The command-line tool: set up on macOS
 
 ```sh
 xcode-select --install          # C compiler for bundled SQLite and TLS crypto

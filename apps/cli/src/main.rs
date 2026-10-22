@@ -1,15 +1,12 @@
 //! `writer`: command-line front end for the writing assistant. It exercises
 //! the same pipeline the macOS app will use, so it doubles as a test harness.
 
-mod engine;
-mod secrets;
-
 use std::io::{IsTerminal, Read, Write};
 use std::path::PathBuf;
 
 use anyhow::{Context, Result, bail};
 use clap::{Parser, Subcommand, ValueEnum};
-use engine::{Engine, ParagraphReport};
+use writer_engine::{Engine, ParagraphReport, secrets};
 use writer_llm::ProviderKind;
 use writer_protocol::{AppContext, AppKind, RewriteMode};
 use writer_store::Store;
@@ -80,7 +77,7 @@ struct RunOpts {
 enum ConfigAction {
     /// Print the current settings.
     Show,
-    /// Change one setting: provider, check_model, rewrite_model, monthly_cap_usd, locale.
+    /// Change one setting: provider, check_model, rewrite_model, monthly_cap_usd, locale, hotkey.
     Set { key: String, value: String },
     /// Print where the config file and database are stored.
     Path,
@@ -169,7 +166,7 @@ async fn run(cli: Cli) -> Result<()> {
             let (reports, totals) = engine.check(&text, &ctx).await?;
 
             if apply {
-                print!("{}", apply_all(&text, &reports));
+                print!("{}", writer_engine::apply_reports(&text, &reports));
             } else if json {
                 println!("{}", serde_json::to_string_pretty(&reports)?);
             } else {
@@ -314,8 +311,9 @@ fn set_config(config: &mut Config, key: &str, value: &str) -> Result<()> {
                 .context("monthly_cap_usd must be a number ≥ 0 (0 turns the cap off)")?
         }
         "locale" => config.locale = value.to_owned(),
+        "hotkey" => config.hotkey = value.to_owned(),
         other => bail!(
-            "unknown setting `{other}` (provider, check_model, rewrite_model, monthly_cap_usd, locale)"
+            "unknown setting `{other}` (provider, check_model, rewrite_model, monthly_cap_usd, locale, hotkey)"
         ),
     }
     for model in [config.check_model(), config.rewrite_model()] {
@@ -338,6 +336,7 @@ fn toml_string(config: &Config) -> String {
     out.push_str(&format!("rewrite_model = \"{}\"\n", config.rewrite_model()));
     out.push_str(&format!("monthly_cap_usd = {}\n", config.monthly_cap_usd));
     out.push_str(&format!("locale = \"{}\"\n", config.locale));
+    out.push_str(&format!("hotkey = \"{}\"\n", config.hotkey));
     out
 }
 
@@ -377,17 +376,4 @@ fn print_reports(reports: &[ParagraphReport]) {
             );
         }
     }
-}
-
-fn apply_all(text: &str, reports: &[ParagraphReport]) -> String {
-    text.split('\n')
-        .enumerate()
-        .map(
-            |(line, paragraph)| match reports.iter().find(|r| r.line == line) {
-                Some(r) => engine::apply(paragraph, &r.suggestions),
-                None => paragraph.to_owned(),
-            },
-        )
-        .collect::<Vec<_>>()
-        .join("\n")
 }
