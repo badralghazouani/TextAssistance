@@ -34,6 +34,17 @@ crates/store      config file, SQLite usage log and result cache
 apps/cli          the `writer` command
 ```
 
+## Set up on macOS
+
+```sh
+xcode-select --install          # C compiler for bundled SQLite and TLS crypto
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh   # Rust
+cargo test --workspace          # runs offline, no API key needed
+cargo build --release
+./target/release/writer key set claude    # stores your key in the Keychain
+cp target/release/writer /usr/local/bin/  # optional: put it on your PATH
+```
+
 ## Try it
 
 ```sh
