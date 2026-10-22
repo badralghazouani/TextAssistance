@@ -13,7 +13,7 @@ The architecture is in two stages:
 
 The client is built so that moving to stage 2 means swapping one component, not rewriting the app.
 
-This repository (`writer`) holds the app.
+This repository (`TextAssistance`) holds the app.
 
 ---
 

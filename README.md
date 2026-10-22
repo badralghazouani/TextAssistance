@@ -1,4 +1,4 @@
-# writer
+# TextAssistance
 
 A Grammarly-style writing assistant with a Rust core. It checks your text for
 spelling, grammar and style problems and rewrites it on request, using
