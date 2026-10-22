@@ -1,0 +1,41 @@
+[workspace]
+resolver = "3"
+members = [
+    "crates/protocol",
+    "crates/core",
+    "crates/privacy",
+    "crates/llm",
+    "crates/store",
+    "apps/cli",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "UNLICENSED"
+publish = false
+
+[workspace.dependencies]
+writer-protocol = { path = "crates/protocol" }
+writer-core = { path = "crates/core" }
+writer-privacy = { path = "crates/privacy" }
+writer-llm = { path = "crates/llm" }
+writer-store = { path = "crates/store" }
+
+anyhow = "1"
+async-trait = "0.1"
+clap = { version = "4", features = ["derive"] }
+directories = "6"
+regex = "1"
+reqwest = { version = "0.13", features = ["json"] }
+rusqlite = { version = "0.40", features = ["bundled"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+toml = "1"
+xxhash-rust = { version = "0.8", features = ["xxh3"] }
+
+[profile.release]
+lto = true
+codegen-units = 1
