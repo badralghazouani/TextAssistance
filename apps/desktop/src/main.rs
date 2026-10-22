@@ -44,6 +44,10 @@ fn main() {
         .plugin(
             tauri_plugin_global_shortcut::Builder::new()
                 .with_handler(|app, _shortcut, event| {
+                    // Called on the main thread (macOS: Carbon's application
+                    // event target), which the keystroke code requires. Handling
+                    // it right away, inside the key event, also lets the popup
+                    // take keyboard focus.
                     if event.state() == ShortcutState::Pressed {
                         on_hotkey(app);
                     }
