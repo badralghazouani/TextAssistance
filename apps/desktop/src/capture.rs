@@ -99,6 +99,11 @@ pub fn paste(text: &str, saved_clipboard: Option<&str>) -> Result<(), CaptureErr
     Ok(())
 }
 
+/// The text currently on the clipboard, if any.
+pub fn clipboard_text() -> Option<String> {
+    Clipboard::new().ok()?.get_text().ok()
+}
+
 pub fn copy(text: &str) -> Result<(), CaptureError> {
     Clipboard::new()?.set_text(text.to_owned())?;
     Ok(())

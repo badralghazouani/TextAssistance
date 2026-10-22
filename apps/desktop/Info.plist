@@ -5,5 +5,30 @@
   <!-- Menu-bar only: no Dock icon, no app switcher entry. -->
   <key>LSUIElement</key>
   <true/>
+
+  <!-- Right-click selected text → Services → "Check with TextAssistance".
+       Handled by `checkText:userData:error:` in src/services.rs. -->
+  <key>NSServices</key>
+  <array>
+    <dict>
+      <key>NSMenuItem</key>
+      <dict>
+        <key>default</key>
+        <string>Check with TextAssistance</string>
+      </dict>
+      <key>NSMessage</key>
+      <string>checkText</string>
+      <key>NSPortName</key>
+      <string>TextAssistance</string>
+      <key>NSSendTypes</key>
+      <array>
+        <string>public.utf8-plain-text</string>
+        <string>NSStringPboardType</string>
+      </array>
+      <!-- An empty context makes the service enabled by default. -->
+      <key>NSRequiredContext</key>
+      <dict/>
+    </dict>
+  </array>
 </dict>
 </plist>

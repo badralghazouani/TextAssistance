@@ -43,6 +43,8 @@ TextAssistance runs in the menu bar. While writing anywhere (Teams, Chrome,
 Brave, Mail, Slack, Notes…):
 
 1. Click in the text (or select part of it) and press **⌃⌥G** (Control+Option+G).
+   Or select text, right-click, and choose **Services → Check with
+   TextAssistance**.
 2. A popup shows the corrections in place. Click any one to skip it, or try
    **Clearer / Shorter / Formal / Friendly** for a rewrite you can edit.
 3. Press **Enter** (or click **Replace**) and your text is swapped for the
@@ -81,6 +83,11 @@ open ../../target/release/bundle/macos/TextAssistance.app
    OpenAI API key and stores it in the Keychain. (Keys saved with
    `writer key set` work too.)
 3. Optional: menu bar icon → **Start at login**.
+4. If **Check with TextAssistance** doesn't show under right-click →
+   Services, refresh macOS's list of services, then reopen the app you're in:
+   `/System/Library/CoreServices/pbs -update`. It can also be switched on, or
+   given its own shortcut, in System Settings → Keyboard → Keyboard Shortcuts
+   → Services → Text.
 
 The menu bar icon also switches between Claude and ChatGPT, shows this month's
 spend, and opens the settings file (change `hotkey` there, then restart).

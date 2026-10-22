@@ -7,9 +7,10 @@
 mod capture;
 mod commands;
 mod platform;
+mod services;
 mod tray;
 
-use std::sync::Mutex;
+use std::sync::{Mutex, OnceLock};
 use std::time::Duration;
 
 use commands::{ErrorView, SessionView};
@@ -18,6 +19,9 @@ use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState};
 use writer_store::config::{Config, Paths};
 
 const POPUP: &str = "popup";
+
+/// For callbacks from macOS (the Services menu) that don't carry an app handle.
+static APP: OnceLock<AppHandle> = OnceLock::new();
 
 /// The text being worked on, from the shortcut press until Replace or Cancel.
 pub struct Session {
@@ -77,6 +81,10 @@ fn main() {
                 .map_err(|e| format!("invalid hotkey `{hotkey}` in settings: {e}"))?;
             app.global_shortcut().register(shortcut)?;
             tray::build(app, &hotkey)?;
+
+            // Right-click → Services → "Check with TextAssistance".
+            let _ = APP.set(app.handle().clone());
+            services::register(on_service_text);
             Ok(())
         })
         .on_window_event(|window, event| {
@@ -110,18 +118,7 @@ fn on_hotkey(app: &AppHandle) {
     }
 
     let session = if !platform::accessibility_trusted(false) {
-        Session {
-            view: SessionView {
-                text: String::new(),
-                error: Some(ErrorView::new(
-                    "accessibility",
-                    "TextAssistance needs Accessibility access to read and replace your text. \
-                     Turn it on in System Settings → Privacy & Security → Accessibility, \
-                     then press the shortcut again.",
-                )),
-            },
-            saved_clipboard: None,
-        }
+        accessibility_session()
     } else {
         platform::wait_for_modifiers_released(Duration::from_millis(1500));
         match capture::capture() {
@@ -132,24 +129,68 @@ fn on_hotkey(app: &AppHandle) {
                 },
                 saved_clipboard: captured.saved_clipboard,
             },
-            Err(e) => Session {
-                view: SessionView {
-                    text: String::new(),
-                    error: Some(ErrorView::new(
-                        match e {
-                            capture::CaptureError::NoText | capture::CaptureError::TooLong(_) => {
-                                "no_text"
-                            }
-                            _ => "other",
-                        },
-                        e.to_string(),
-                    )),
-                },
-                saved_clipboard: None,
-            },
+            Err(e) => error_session(&e),
         }
     };
+    open_session(app, session);
+}
 
+/// Runs on the main thread when "Check with TextAssistance" is chosen from
+/// the right-click Services menu; macOS hands over the selected text.
+fn on_service_text(text: String) {
+    let Some(app) = APP.get() else {
+        return;
+    };
+    let session = if !platform::accessibility_trusted(false) {
+        accessibility_session()
+    } else {
+        let chars = text.chars().count();
+        if text.trim().is_empty() {
+            error_session(&capture::CaptureError::NoText)
+        } else if chars > capture::MAX_CHARS {
+            error_session(&capture::CaptureError::TooLong(chars))
+        } else {
+            Session {
+                view: SessionView { text, error: None },
+                // Replace pastes through the clipboard, then restores this.
+                saved_clipboard: capture::clipboard_text(),
+            }
+        }
+    };
+    open_session(app, session);
+}
+
+fn accessibility_session() -> Session {
+    Session {
+        view: SessionView {
+            text: String::new(),
+            error: Some(ErrorView::new(
+                "accessibility",
+                "TextAssistance needs Accessibility access to read and replace your text. \
+                 Turn it on in System Settings → Privacy & Security → Accessibility, \
+                 then try again.",
+            )),
+        },
+        saved_clipboard: None,
+    }
+}
+
+fn error_session(e: &capture::CaptureError) -> Session {
+    let kind = match e {
+        capture::CaptureError::NoText | capture::CaptureError::TooLong(_) => "no_text",
+        _ => "other",
+    };
+    Session {
+        view: SessionView {
+            text: String::new(),
+            error: Some(ErrorView::new(kind, e.to_string())),
+        },
+        saved_clipboard: None,
+    }
+}
+
+/// Stores the session, shows the popup and hands it the text.
+fn open_session(app: &AppHandle, session: Session) {
     let view = session.view.clone();
     *app.state::<AppState>().session.lock().unwrap() = Some(session);
     show_popup(app);
